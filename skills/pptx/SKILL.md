@@ -1,7 +1,7 @@
 ---
 name: pptx
 description: "Create, read, analyze, edit, combine, or validate PowerPoint presentations. Use whenever a task involves a .pptx file, slide deck, presentation template, speaker notes, slide layouts, or presentation QA."
-license: Proprietary. LICENSE.txt has complete terms
+license: MIT
 ---
 
 # PPTX Skill

@@ -1,6 +1,6 @@
 # Codex PPTX
 
-自用 PowerPoint 工具包：创建、读取、编辑、合并、渲染和检查 PPTX。
+开源 PowerPoint 工具包：创建、读取、编辑、合并、渲染和检查 PPTX。
 
 ## 内容
 
@@ -12,7 +12,7 @@
 
 ## 使用
 
-在有权限访问此私有仓库的机器上，先配置 GitHub 身份，再添加插件来源：
+添加插件来源：
 
 ```bash
 codex plugin marketplace add yss-off/codex-pptx --ref main
@@ -37,9 +37,8 @@ npm install -g pptxgenjs
 
 ## 来源和许可
 
-本仓库保存本机现用 PPTX 技能的快照，排除了 Python 缓存；原始技能和脚本未作修改。
-原 `SKILL.md` 标有 `Proprietary. LICENSE.txt has complete terms`，但本机源目录未提供 `LICENSE.txt`。
-本仓库保留这一声明，不为原有内容重新授予开源许可；当前作为私有自用备份保存。
-第三方 Office XML schema 保留其原有文件内容与声明。
+本项目原创内容采用 [MIT License](LICENSE)，允许使用、修改和再分发。
+仓库基于我们自研并拥有开源授权的本机 PPTX 工具包整理，排除了 Python 缓存。
+第三方 Office XML schema 保留其原有内容与声明，其权利和许可不由本项目的 MIT 许可替代。
 
 插件结构依据 [OpenAI 官方打包文档](https://developers.openai.com/plugins/build/plugins)。

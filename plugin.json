@@ -3,5 +3,6 @@
   "name": "codex-pptx",
   "version": "0.1.0",
   "description": "Personal PowerPoint creation, editing, rendering, and validation workflows for Codex.",
-  "repository": "https://github.com/yss-off/codex-pptx"
+  "repository": "https://github.com/yss-off/codex-pptx",
+  "license": "MIT"
 }
