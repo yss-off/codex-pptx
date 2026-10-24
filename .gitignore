@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+node_modules/
+.venv/
+.env
+.env.*
+.pptx-renders/
+.DS_Store

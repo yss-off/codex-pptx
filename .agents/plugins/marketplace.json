@@ -1,0 +1,20 @@
+{
+  "name": "personal-pptx",
+  "interface": {
+    "displayName": "Personal PPTX"
+  },
+  "plugins": [
+    {
+      "name": "codex-pptx",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
