@@ -19,7 +19,14 @@ codex plugin marketplace add yss-off/codex-pptx --ref main
 ```
 
 随后在支持本地插件的桌面客户端插件目录中选择 Personal PPTX 并安装。
-这里仅提供打包和分发文件，尚未在另一台机器上验证安装。
+也可在支持插件安装命令的 Codex CLI 中执行：
+
+```bash
+codex plugin add codex-pptx@personal-pptx
+codex plugin list --json --marketplace personal-pptx
+```
+
+在新聊天中使用已安装的 `codex-pptx:pptx` 技能制作或编辑演示文稿。
 
 也可将 `skills/pptx` 复制到工具实际使用的技能目录；已有同名技能时先比较并备份。
 
@@ -34,6 +41,24 @@ npm install -g pptxgenjs
 
 可选图标依赖：`react-icons`、`react`、`react-dom`、`sharp`。
 中文演示文稿需要运行机器上可用的中文字体。
+受限 Linux 环境若需要自动编译 LibreOffice socket 兼容库，还需要 `gcc`；兼容库在进程私有临时目录中构建。
+
+## 开发与验证
+
+Python 3.10 或更高版本：
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests -v
+```
+
+回归测试覆盖包内绝对路径、XML 命名空间、页面/布局/母版结构校验、
+隐藏页面映射、图表和嵌入工作簿独立复制、默认打包校验及私有临时库。
+测试使用临时目录，不需要模型调用或显卡。
+
+`pack.py` 默认执行校验，`--original` 用于对比原文件已有的 XSD 错误，
+不是开启校验的开关。只有明确传入 `--validate false` 才跳过校验。
+复制页面时，图表及其可编辑依赖会独立复制；原页面的演讲备注不自动继承。
 
 ## 来源和许可
 

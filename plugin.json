@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-pptx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Personal PowerPoint creation, editing, rendering, and validation workflows for Codex.",
   "repository": "https://github.com/yss-off/codex-pptx",
   "license": "MIT"

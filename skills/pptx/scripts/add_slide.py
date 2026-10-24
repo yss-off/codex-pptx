@@ -19,9 +19,58 @@ Prints the <p:sldId> element to add to presentation.xml.
 """
 
 import re
+import os
 import shutil
 import sys
 from pathlib import Path
+
+from lxml import etree
+from office.opc import REL_NS, resolve_target
+
+CONTENT_TYPES_NS = "http://schemas.openxmlformats.org/package/2006/content-types"
+
+
+def _clone_chart(unpacked_dir: Path, source: Path, copies: dict[Path, Path]) -> Path:
+    """Copy a chart's editable dependency graph, including its embedded workbook."""
+    if source in copies:
+        return copies[source]
+    if not source.is_file():
+        raise ValueError(f"Missing chart dependency: {source}")
+    stem = re.sub(r"\d+$", "", source.stem)
+    number = 1
+    dest = source.with_name(f"{stem}{number}{source.suffix}")
+    while dest.exists():
+        number += 1
+        dest = source.with_name(f"{stem}{number}{source.suffix}")
+    copies[source] = dest
+    shutil.copy2(source, dest)
+
+    ct_path = unpacked_dir / "[Content_Types].xml"
+    ct = etree.parse(str(ct_path))
+    source_name = "/" + source.relative_to(unpacked_dir.resolve()).as_posix()
+    dest_name = "/" + dest.relative_to(unpacked_dir.resolve()).as_posix()
+    for override in ct.getroot().findall(f"{{{CONTENT_TYPES_NS}}}Override"):
+        if override.get("PartName") == source_name:
+            etree.SubElement(ct.getroot(), f"{{{CONTENT_TYPES_NS}}}Override", PartName=dest_name, ContentType=override.get("ContentType"))
+            ct.write(str(ct_path), encoding="UTF-8", xml_declaration=True)
+            break
+
+    source_rels = source.parent / "_rels" / f"{source.name}.rels"
+    if source_rels.exists():
+        tree = etree.parse(str(source_rels))
+        dest_rels = dest.parent / "_rels" / f"{dest.name}.rels"
+        for rel in tree.getroot().findall(f"{{{REL_NS}}}Relationship"):
+            target = resolve_target(unpacked_dir, source_rels, rel.get("Target", ""), rel.get("TargetMode", ""))
+            if target is None:
+                continue
+            # Images and shared presentation infrastructure are immutable here.
+            if rel.get("Type", "").rsplit("/", 1)[-1] in {"image", "slideLayout", "slideMaster", "theme"}:
+                continue
+            cloned = _clone_chart(unpacked_dir, target, copies)
+            rel.set("Target", os.path.relpath(cloned, dest.parent).replace(os.sep, "/"))
+        dest_rels.parent.mkdir(exist_ok=True)
+        tree.write(str(dest_rels), encoding="UTF-8", xml_declaration=True)
+    return dest
 
 
 def get_next_slide_number(slides_dir: Path) -> int:
@@ -107,15 +156,18 @@ def duplicate_slide(unpacked_dir: Path, source: str) -> None:
     shutil.copy2(source_slide, dest_slide)
 
     if source_rels.exists():
-        shutil.copy2(source_rels, dest_rels)
-
-        rels_content = dest_rels.read_text(encoding="utf-8")
-        rels_content = re.sub(
-            r'\s*<Relationship[^>]*Type="[^"]*notesSlide"[^>]*/>\s*',
-            "\n",
-            rels_content,
-        )
-        dest_rels.write_text(rels_content, encoding="utf-8")
+        tree = etree.parse(str(source_rels))
+        copies = {}
+        for rel in list(tree.getroot()):
+            rel_type = rel.get("Type", "")
+            if rel_type.endswith("/notesSlide"):
+                tree.getroot().remove(rel)
+            elif rel_type.endswith("/chart"):
+                target = resolve_target(unpacked_dir, source_rels, rel.get("Target", ""), rel.get("TargetMode", ""))
+                if target is not None:
+                    cloned = _clone_chart(unpacked_dir, target, copies)
+                    rel.set("Target", os.path.relpath(cloned, dest_slide.parent).replace(os.sep, "/"))
+        tree.write(str(dest_rels), encoding="UTF-8", xml_declaration=True)
 
     _add_to_content_types(unpacked_dir, dest)
 

@@ -16,6 +16,7 @@ Examples:
 """
 
 import argparse
+import posixpath
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,7 @@ from pathlib import Path
 
 import defusedxml.minidom
 from office.soffice import get_soffice_env
+from office.opc import REL_NS, OFFICE_REL_NS, PRESENTATION_NS
 from PIL import Image, ImageDraw, ImageFont
 
 THUMBNAIL_WIDTH = 300
@@ -98,22 +100,25 @@ def get_slide_info(pptx_path: Path) -> list[dict]:
         rels_dom = defusedxml.minidom.parseString(rels_content)
 
         rid_to_slide = {}
-        for rel in rels_dom.getElementsByTagName("Relationship"):
+        for rel in rels_dom.getElementsByTagNameNS(REL_NS, "Relationship"):
             rid = rel.getAttribute("Id")
             target = rel.getAttribute("Target")
             rel_type = rel.getAttribute("Type")
-            if "slide" in rel_type and target.startswith("slides/"):
-                rid_to_slide[rid] = target.replace("slides/", "")
+            if rel_type.endswith("/slide") and rel.getAttribute("TargetMode") != "External":
+                part = posixpath.normpath(target.lstrip("/") if target.startswith("/") else posixpath.join("ppt", target))
+                rid_to_slide[rid] = part
 
         pres_content = zf.read("ppt/presentation.xml").decode("utf-8")
         pres_dom = defusedxml.minidom.parseString(pres_content)
 
         slides = []
-        for sld_id in pres_dom.getElementsByTagName("p:sldId"):
-            rid = sld_id.getAttribute("r:id")
+        for sld_id in pres_dom.getElementsByTagNameNS(PRESENTATION_NS, "sldId"):
+            rid = sld_id.getAttributeNS(OFFICE_REL_NS, "id")
             if rid in rid_to_slide:
-                hidden = sld_id.getAttribute("show") == "0"
-                slides.append({"name": rid_to_slide[rid], "hidden": hidden})
+                part = rid_to_slide[rid]
+                slide_dom = defusedxml.minidom.parseString(zf.read(part))
+                hidden = slide_dom.documentElement.getAttribute("show") in {"0", "false"}
+                slides.append({"name": posixpath.basename(part), "hidden": hidden})
 
         return slides
 

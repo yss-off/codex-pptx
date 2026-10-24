@@ -698,6 +698,9 @@ class BaseSchemaValidator:
         if xml_file.parent.name in self.MAIN_CONTENT_FOLDERS:
             return self.schemas_dir / self.SCHEMA_MAPPINGS[xml_file.parent.name]
 
+        if xml_file.parent.name in {"slides", "slideLayouts", "slideMasters", "notesSlides", "notesMasters"}:
+            return self.schemas_dir / self.SCHEMA_MAPPINGS["ppt"]
+
         return None
 
     def _clean_ignorable_namespaces(self, xml_doc):

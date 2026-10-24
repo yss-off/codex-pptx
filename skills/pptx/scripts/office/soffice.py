@@ -27,7 +27,7 @@ def get_soffice_env() -> dict:
 
     if _needs_shim():
         shim = _ensure_shim()
-        env["LD_PRELOAD"] = str(shim)
+        env["LD_PRELOAD"] = " ".join(filter(None, (str(shim), env.get("LD_PRELOAD"))))
 
     return env
 
@@ -38,7 +38,8 @@ def run_soffice(args: list[str], **kwargs) -> subprocess.CompletedProcess:
 
 
 
-_SHIM_SO = Path(tempfile.gettempdir()) / "lo_socket_shim.so"
+# Keep the private build directory alive for the lifetime of the subprocesses.
+_SHIM_DIRECTORY = None
 
 
 def _needs_shim() -> bool:
@@ -51,18 +52,28 @@ def _needs_shim() -> bool:
 
 
 def _ensure_shim() -> Path:
-    if _SHIM_SO.exists():
-        return _SHIM_SO
+    global _SHIM_DIRECTORY
+    if _SHIM_DIRECTORY is not None:
+        library = Path(_SHIM_DIRECTORY.name) / "lo_socket_shim.so"
+        if library.is_file():
+            return library
 
-    src = Path(tempfile.gettempdir()) / "lo_socket_shim.c"
-    src.write_text(_SHIM_SOURCE)
-    subprocess.run(
-        ["gcc", "-shared", "-fPIC", "-o", str(_SHIM_SO), str(src), "-ldl"],
-        check=True,
-        capture_output=True,
-    )
-    src.unlink()
-    return _SHIM_SO
+    directory = tempfile.TemporaryDirectory(prefix="codex-pptx-lo-")
+    src = Path(directory.name) / "lo_socket_shim.c"
+    library = Path(directory.name) / "lo_socket_shim.so"
+    try:
+        src.write_text(_SHIM_SOURCE)
+        subprocess.run(
+            ["gcc", "-shared", "-fPIC", "-o", str(library), str(src), "-ldl"],
+            check=True,
+            capture_output=True,
+        )
+        src.unlink()
+    except Exception:
+        directory.cleanup()
+        raise
+    _SHIM_DIRECTORY = directory
+    return library
 
 
 

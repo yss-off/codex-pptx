@@ -38,16 +38,15 @@ def pack(
     if suffix not in {".docx", ".pptx", ".xlsx"}:
         return None, f"Error: {output_file} must be a .docx, .pptx, or .xlsx file"
 
-    if validate and original_file:
-        original_path = Path(original_file)
-        if original_path.exists():
-            success, output = _run_validation(
-                input_dir, original_path, suffix, infer_author_func
-            )
-            if output:
-                print(output)
-            if not success:
-                return None, f"Error: Validation failed for {input_dir}"
+    original_path = Path(original_file) if original_file else None
+    if original_path is not None and not original_path.is_file():
+        return None, f"Error: Original file does not exist: {original_file}"
+    if validate:
+        success, output = _run_validation(input_dir, original_path, suffix, infer_author_func)
+        if output:
+            print(output)
+        if not success:
+            return None, f"Error: Validation failed for {input_dir}"
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_content_dir = Path(temp_dir) / "content"
@@ -68,7 +67,7 @@ def pack(
 
 def _run_validation(
     unpacked_dir: Path,
-    original_file: Path,
+    original_file: Path | None,
     suffix: str,
     infer_author_func=None,
 ) -> tuple[bool, str | None]:
@@ -77,7 +76,7 @@ def _run_validation(
 
     if suffix == ".docx":
         author = "Claude"
-        if infer_author_func:
+        if infer_author_func and original_file:
             try:
                 author = infer_author_func(unpacked_dir, original_file)
             except ValueError as e:
@@ -85,13 +84,14 @@ def _run_validation(
 
         validators = [
             DOCXSchemaValidator(unpacked_dir, original_file),
-            RedliningValidator(unpacked_dir, original_file, author=author),
         ]
+        if original_file:
+            validators.append(RedliningValidator(unpacked_dir, original_file, author=author))
     elif suffix == ".pptx":
         validators = [PPTXSchemaValidator(unpacked_dir, original_file)]
 
     if not validators:
-        return True, None
+        return False, f"Error: Validation not supported for {suffix}; use --validate false explicitly"
 
     total_repairs = sum(v.repair() for v in validators)
     if total_repairs:
