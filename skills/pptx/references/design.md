@@ -6,6 +6,8 @@ Use this file to choose a visual direction. Adapt the guidance to the audience, 
 
 Choose a dominant visual idea connected to the subject: a restrained technical grid, documentary evidence, editorial typography, a material texture, or another content-informed motif. Keep the motif consistent without forcing identical layouts.
 
+If the direction is not yet settled, test it on representative real content, such as a story/evidence page, a process, and a dense comparison. The selection depends on this deck; neither a fixed page count nor an empty template or swatch board establishes that the content works. Use the preview to resolve hierarchy and density before expanding the design, without reopening choices the user has already made.
+
 Use one dominant color, supporting neutrals, and one or two accents. Validate contrast after rendering. Palette examples are starting points, not mandatory themes:
 
 | Direction | Dark | Mid | Light | Accent |
@@ -15,6 +17,8 @@ Use one dominant color, supporting neutrals, and one or two accents. Validate co
 | Warm executive | `4A3028` | `B85042` | `F5EFE6` | `A7BEAE` |
 | Charcoal minimal | `212121` | `525252` | `F2F2F2` | `D4AF37` |
 | Clear analytics | `264653` | `2A9D8F` | `F7F5EF` | `E76F51` |
+
+Assign colors by role (text, surface, relationship, emphasis), not by global replacement of a hex value. Check text against its actual background, including tinted panels and dark variants; meaningful arrows need sufficient contrast too. Dark section pages are optional, not an automatic way to create narrative. Confirm that the most salient element carries the page's main message, rather than a generic phase word, product name, or decorative line.
 
 ## Density and shape language
 

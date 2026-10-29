@@ -33,9 +33,9 @@ Text extraction verifies content, not layout. Render the deck whenever placement
 
 1. Establish the audience, presentation purpose, decision or belief sought, delivery format, and source-of-truth content.
 2. Choose template editing or from-scratch generation. Preserve the original input file.
-3. Plan one clear job for each slide. Treat page-type and layout catalogs as options, not mandatory taxonomy.
+3. Plan one clear job for each slide, then read the titles in sequence to check the deck's argument or narrative before polishing individual pages. Treat page-type and layout catalogs as options, not mandatory taxonomy.
 4. Build with shared theme and layout helpers. Keep content, evidence, citations, and speaker notes traceable to their sources.
-5. Run content QA and visual QA. Fix observed issues within scope and re-render affected slides after changes. If all required checks pass with no issues, deliver without making an artificial edit.
+5. Check content/narrative, visual quality, and file structure separately using [QA guidance](references/qa.md). Fix observed issues within scope and re-render affected slides after changes. If required checks pass with no issues, deliver without making an artificial edit.
 6. Deliver the `.pptx` plus any specifically requested supporting files; do not leave previews or temporary artifacts beside the final file.
 
 ## Defaults, not universal rules
@@ -59,7 +59,7 @@ Text extraction verifies content, not layout. Render the deck whenever placement
 - Extracted text is complete, correctly ordered, and free of placeholders.
 - Rendered slides have no clipping, overlap, unintended substitution, stale images, or unreadable contrast.
 - Claims, figures, units, citations, terminology, and live-versus-replay labels are consistent.
-- The final PPTX opens through LibreOffice conversion; template edits also pass the bundled pack/validation workflow or report any known validator disagreement explicitly.
+- The final PPTX opens through LibreOffice conversion and receives a structural check. Distinguish full validation from a baseline comparison that only finds no new errors; disclose inherited errors and checks not performed.
 - A fresh render after the final edit shows no new issues.
 
 ## Dependencies

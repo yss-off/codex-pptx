@@ -101,7 +101,9 @@ def main():
 
     success = all(v.validate() for v in validators)
 
-    if success:
+    if file_extension == ".pptx":
+        print(validators[0].validation_summary(success))
+    elif success:
         print("All validations PASSED!")
 
     sys.exit(0 if success else 1)

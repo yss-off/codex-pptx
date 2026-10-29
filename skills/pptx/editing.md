@@ -13,18 +13,9 @@ When using an existing presentation as a template:
 
 2. **Plan slide mapping**: For each content section, choose a template slide.
 
-   ⚠️ **USE VARIED LAYOUTS** — monotonous presentations are a common failure mode. Don't default to basic title + bullet slides. Actively seek out:
-   - Multi-column layouts (2-column, 3-column)
-   - Image + text combinations
-   - Full-bleed images with text overlay
-   - Quote or callout slides
-   - Section dividers
-   - Stat/number callouts
-   - Icon grids or icon + text rows
+   For a local revision, first identify the allowed pages and properties. Preserve the original and name the editable source of truth; do not run an older generator over later PPTX edits.
 
-   **Avoid:** Repeating the same text-heavy layout for every slide.
-
-   Match content type to layout style (e.g., key points → bullet slide, team info → multi-column, testimonials → quote slide).
+   Match layout to the content and preserve the agreed template. Vary layouts when it improves hierarchy or pacing; repeat them when comparison or navigation benefits. A local edit does not authorize redesigning other pages.
 
 3. **Unpack**: `python <skill-dir>/scripts/office/unpack.py template.pptx unpacked/`
 
@@ -35,7 +26,7 @@ When using an existing presentation as a template:
    - **Complete all structural changes before step 5**
 
 5. **Edit content**: Update text in each `slide{N}.xml`.
-   **Use subagents here if available** — slides are separate XML files, so subagents can edit in parallel.
+   Independent page edits may be delegated when authorized and their shared dependencies are controlled; see Editing Content below.
 
 6. **Clean**: `python <skill-dir>/scripts/clean.py unpacked/`
 
@@ -102,6 +93,8 @@ Creates `thumbnails.jpg` with slide filenames as labels. Default 3 columns, max 
 
 Slide order is in `ppt/presentation.xml` → `<p:sldIdLst>`.
 
+Resolve each entry through `ppt/_rels/presentation.xml.rels`; after reordering, a displayed page number is not necessarily the number in `slideN.xml`. Follow the slide's relationships to its notes. Check the final displayed order, visible numbering, and notes together.
+
 **Reorder**: Rearrange `<p:sldId>` elements.
 
 **Delete**: Remove `<p:sldId>`, then run `clean.py`.
@@ -112,7 +105,7 @@ Slide order is in `ppt/presentation.xml` → `<p:sldIdLst>`.
 
 ## Editing Content
 
-**Subagents:** If available, use them here (after completing step 4). Each slide is a separate XML file, so subagents can edit in parallel. In your prompt to subagents, include:
+**Subagents:** Delegate only when authorized and independent page edits materially benefit from parallel work. Shared layouts, themes, media, and relationships need one coordinated owner. If delegating after the structural edits, include:
 - The slide file path(s) to edit
 - **"Use Codex apply_patch for focused text edits; use a namespace-aware XML script when structural edits require it."**
 - The formatting rules and common pitfalls below
@@ -124,12 +117,11 @@ For each slide:
 
 Use Codex `apply_patch` for focused XML text edits. For repeated or structural changes, use a namespace-aware Python XML script, verify the resulting diff, and run the bundled validation and rendering checks. Use whichever supported editing tool the host exposes; do not require a tool named `Edit`.
 
+Match the diff check to the edit: color-only changes should preserve text, geometry, notes and order; layout-only changes should preserve the intended text and notes. Report unexpected changes instead of describing an edit as surgical solely because it touched one XML file. See [QA](references/qa.md) for the `compare_decks.py` helper, full versus baseline validation, and rendering checks.
+
 ### Formatting Rules
 
-- **Bold all headers, subheadings, and inline labels**: Use `b="1"` on `<a:rPr>`. This includes:
-  - Slide titles
-  - Section headers within a slide
-  - Inline labels like (e.g.: "Status:", "Description:") at the start of a line
+- **Preserve the agreed text hierarchy**: Use `b="1"` on `<a:rPr>` where bold belongs in the template or approved design; do not bold every label during unrelated edits.
 - **Never use unicode bullets (•)**: Use proper list formatting with `<a:buChar>` or `<a:buAutoNum>`
 - **Bullet consistency**: Let bullets inherit from the layout. Only specify `<a:buChar>` or `<a:buNone>`.
 
@@ -180,7 +172,7 @@ If source has multiple items (numbered lists, multiple sections), create separat
 <!-- continue pattern -->
 ```
 
-Copy `<a:pPr>` from the original paragraph to preserve line spacing. Use `b="1"` on headers.
+Copy `<a:pPr>` from the original paragraph to preserve line spacing. Match header emphasis to the agreed design.
 
 ### Smart Quotes
 

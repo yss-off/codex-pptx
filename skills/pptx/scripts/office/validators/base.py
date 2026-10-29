@@ -95,6 +95,9 @@ class BaseSchemaValidator:
         self.unpacked_dir = Path(unpacked_dir).resolve()
         self.original_file = Path(original_file) if original_file else None
         self.verbose = verbose
+        # One entry per checked part. Counts are distinct diagnostics per part,
+        # not counts of every XML node with the same diagnostic.
+        self.xsd_results = None
 
         self.schemas_dir = Path(__file__).parent.parent / "schemas"
 
@@ -603,20 +606,26 @@ class BaseSchemaValidator:
             xml_file, unpacked_dir
         )
 
-        if is_valid is None:
-            return None, set()  
-        elif is_valid:
-            return True, set()  
-
-        original_errors = self._get_original_file_errors(xml_file)
-
-        assert current_errors is not None
-        new_errors = current_errors - original_errors
-
-        new_errors = {
-            e for e in new_errors
-            if not any(pattern in e for pattern in self.IGNORED_VALIDATION_ERRORS)
+        current_errors = current_errors or set()
+        original_errors = self._get_original_file_errors(xml_file) if current_errors else set()
+        ignored_errors = {
+            e for e in current_errors
+            if any(pattern in e for pattern in self.IGNORED_VALIDATION_ERRORS)
         }
+        inherited_errors = (current_errors - ignored_errors) & original_errors
+        new_errors = current_errors - ignored_errors - inherited_errors
+        if self.xsd_results is not None:
+            self.xsd_results[str(xml_file.relative_to(unpacked_dir))] = {
+                "current": sorted(current_errors),
+                "inherited": sorted(inherited_errors),
+                "new": sorted(new_errors),
+                "ignored": sorted(ignored_errors),
+                "skipped": is_valid is None,
+            }
+        if is_valid is None:
+            return None, set()
+        if is_valid:
+            return True, set()
 
         if new_errors:
             if verbose:
@@ -634,6 +643,7 @@ class BaseSchemaValidator:
             return True, set()
 
     def validate_against_xsd(self):
+        self.xsd_results = {}
         new_errors = []
         original_error_count = 0
         valid_count = 0
@@ -648,11 +658,9 @@ class BaseSchemaValidator:
             if is_valid is None:
                 skipped_count += 1
                 continue
-            elif is_valid and not new_file_errors:
-                valid_count += 1
-                continue
             elif is_valid:
-                original_error_count += 1
+                if self.xsd_results[str(relative_path)]["inherited"]:
+                    original_error_count += 1
                 valid_count += 1
                 continue
 

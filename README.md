@@ -104,7 +104,7 @@ codex-pptx/
 │   ├── SKILL.md                 # 入口与工作约定
 │   ├── references/              # 生成、设计和检查指南
 │   └── scripts/                 # 生成、渲染和 Office XML 工具
-├── tests/                       # 16 个行为回归测试
+├── tests/                       # 生成、编辑与校验的行为回归测试
 └── docs/                        # 验证记录和展示素材
 ```
 
@@ -112,11 +112,13 @@ codex-pptx/
 
 ```bash
 python -m pip install -r requirements-dev.txt
+npm install -g pptxgenjs@4.0.1
 python -m unittest discover -s tests -v
 ```
 
-测试在临时目录运行，无需模型调用或显卡。GitHub Actions 在 Python 3.10 和 3.13
-上执行同一组检查。已验证 Linux CLI 安装与调用；Windows/macOS 尚未验证。
+测试在临时目录运行，无需模型调用或显卡。生成集成测试需要 Node.js 与 PptxGenJS；
+缺少依赖时明确跳过，不能视为完整验证。GitHub Actions 配置在 Python 3.10 和 3.13
+上安装固定的生成器版本并运行检查。已验证 Linux CLI 安装与调用；Windows/macOS 尚未验证。
 
 发现问题或希望改进工作流，欢迎提交 [Issue](https://github.com/yss-off/codex-pptx/issues)
 或 Pull Request。参见[贡献说明](CONTRIBUTING.md)、[验证记录](docs/validation.md)和[更新记录](CHANGELOG.md)。

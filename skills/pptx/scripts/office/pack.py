@@ -99,7 +99,9 @@ def _run_validation(
 
     success = all(v.validate() for v in validators)
 
-    if success:
+    if suffix == ".pptx":
+        output_lines.append(validators[0].validation_summary(success))
+    elif success:
         output_lines.append("All validations PASSED!")
 
     return success, "\n".join(output_lines) if output_lines else None

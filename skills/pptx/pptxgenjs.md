@@ -16,6 +16,28 @@ slide.addText("Hello World!", { x: 0.5, y: 0.5, fontSize: 36, color: "363636" })
 pres.writeFile({ fileName: "Presentation.pptx" });
 ```
 
+## Speaker notes and export validation
+
+```javascript
+const slide = pres.addSlide();
+slide.addNotes("Explain the key observation, then transition to the next page.");
+// In your async entry point:
+await pres.writeFile({ fileName: "Presentation.pptx" });
+```
+
+After export, verify each notes body through its slide relationship in actual
+presentation order. Matching notes-file and slide counts does not prove that each
+note belongs to the correct slide, especially after reordering.
+
+Run full structure validation as well as rendering (see [QA](references/qa.md)).
+Known local exporter behavior: PptxGenJS 4.0.1 writes `notesMasterIdLst` after
+`sldIdLst`; the bundled XSD flags that order. The generator source also contains
+compatibility comments, so do not silently monkey-patch the library or treat a
+successful LibreOffice render as proof of Microsoft PowerPoint compatibility.
+Report any remaining error; if an explicit narrow package-order repair is made,
+preserve the source and verify the notes associations, full structure, and render
+again. The generation regression checks this condition rather than hiding it.
+
 ## Layout Dimensions
 
 Slide dimensions (coordinates in inches):
@@ -117,6 +139,21 @@ slide.addShape(pres.shapes.RECTANGLE, {
 });
 ```
 
+### Directed lines without negative dimensions
+
+Use endpoint coordinates rather than negative `w` or `h` for leftward/upward lines:
+
+```javascript
+const { lineBetween } = require("/absolute/skill/path/scripts/pptx_helpers.js");
+slide.addShape(pres.ShapeType.line, lineBetween(6, 4, 2, 1, {
+  line: { color: "275A92", width: 2, endArrowType: "triangle" }
+}));
+```
+
+The helper normalizes extents and uses `flipH`/`flipV`; the arrow remains at `(2, 1)`.
+It rejects coincident endpoints and post-placement rotation. Geometry overrides
+accidental geometry fields in the style options. Keep options fresh for each call.
+
 Shadow options:
 
 | Property | Type | Range | Notes |
@@ -165,28 +202,30 @@ slide.addImage({
 });
 ```
 
-### Image Sizing Modes
+### Image sizing: choose contain or crop explicitly
+
+Read the source image dimensions first; pass width/height in the same unit, usually
+pixels. The helpers below use numeric inch coordinates and return fresh options.
+Use the absolute path to this installed skill's `scripts/pptx_helpers.js`.
 
 ```javascript
-// Contain - fit inside, preserve ratio
-{ sizing: { type: 'contain', w: 4, h: 3 } }
+const { imageContain, imageCrop } = require("/absolute/skill/path/scripts/pptx_helpers.js");
+const sourceWidth = 2400, sourceHeight = 1000;
+const box = { x: 1, y: 1, w: 4, h: 4 };
 
-// Cover - fill area, preserve ratio (may crop)
-{ sizing: { type: 'cover', w: 4, h: 3 } }
+// Show the whole image, centered within the box, preserving its aspect ratio.
+slide.addImage({ path: "images/chart.png", ...imageContain(sourceWidth, sourceHeight, box) });
 
-// Crop - cut specific portion
-{ sizing: { type: 'crop', x: 0.5, y: 0.5, w: 2, h: 2 } }
+// Fill the box with a centered crop; appropriate only if losing edges is intended.
+slide.addImage({ path: "images/photo.png", ...imageCrop(sourceWidth, sourceHeight, box) });
 ```
 
-### Calculate Dimensions (preserve aspect ratio)
-
-```javascript
-const origWidth = 1978, origHeight = 923, maxHeight = 3.0;
-const calcWidth = maxHeight * (origWidth / origHeight);
-const centerX = (10 - calcWidth) / 2;
-
-slide.addImage({ path: "image.png", x: centerX, y: 1.2, w: calcWidth, h: maxHeight });
-```
+Do not use `sizingContain: true`: it is not a supported PptxGenJS image option.
+`imageCrop` uses supported `sizing: { type: "cover", w, h }`, with source-proportional
+`w`/`h` for the exporter to calculate cropping. A raw `addImage({w, h})` stretches
+unless those dimensions already preserve the source ratio. Do not crop scientific
+axes, legends, or evidence silently. Inspect the rendered image, not just the API
+options.
 
 ### Supported Formats
 

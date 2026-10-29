@@ -88,10 +88,13 @@ Only an explicit `--validate false` skips validation. Duplicated slides receive 
 
 ```bash
 python -m pip install -r requirements-dev.txt
+npm install -g pptxgenjs@4.0.1
 python -m unittest discover -s tests -v
 ```
 
-The 16 regression tests run in temporary directories without a model call or GPU.
+Regression tests run in temporary directories without a model call or GPU.
+Generation integration tests require Node.js and PptxGenJS; missing dependencies
+produce explicit skips, not full validation. CI installs the pinned generator.
 GitHub Actions runs the suite on Python 3.10 and 3.13. Linux CLI installation and invocation have been verified; Windows/macOS have not.
 
 See the [validation record](docs/validation.md), [contribution guide](CONTRIBUTING.md), and [changelog](CHANGELOG.md).

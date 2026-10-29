@@ -1,6 +1,15 @@
 # PPTX Quality Assurance
 
-Assume the first render contains problems. Validate content and appearance separately.
+Look for problems in the first render; do not equate successful rendering with quality. Keep the following judgments separate:
+
+| Check | Evidence it needs |
+|---|---|
+| Content and narrative | Approved brief, displayed slide order, page text and notes; coherent title sequence, supported claims, and useful transitions |
+| Visual quality | Full-page renders plus a deck overview; hierarchy, readability, color, alignment, and repetition |
+| Structure and editability | Source-package validation, relationships, native objects, and notes matched to their displayed slides |
+| Live delivery | Actual rehearsal or audience/projection feedback; render checks alone cannot establish timing or comprehension |
+
+Report definite defects, likely misunderstanding, aesthetic preferences, and unverified conditions distinctly. A positive judgment in one category is not a pass in the others.
 
 ## Content QA
 
@@ -35,6 +44,8 @@ The command creates a new render directory for every run and prints the absolute
 
 For an important or complex deck, use a fresh independent visual reviewer when available. A subagent is optional for small decks; the independent inspection and evidence are what matter.
 
+When an independent review is used, provide the current render, notes, and confirmed constraints. Reconcile suggestions with those constraints and verify concrete findings locally; do not silently apply every recommendation or make external/Pro review a default requirement.
+
 ## Verification loop
 
 1. Generate or edit the deck.
@@ -48,6 +59,22 @@ Complete when required content, visual and structural checks pass and observed i
 
 ## Structural checks
 
-Template editing should use the bundled `pack.py --original` workflow so inherited source-package issues are distinguished from newly introduced errors. For generated decks, also verify that LibreOffice can convert the final PPTX to PDF.
+Newly generated decks need full validation, without an original-file exemption:
+
+```bash
+python <skill-dir>/scripts/office/validate.py output.pptx
+```
+
+Template editing should also use `pack.py --original` to distinguish inherited issues from introduced errors. `NO_NEW_ERRORS` means no new distinct XSD diagnostic messages per part; it does not compare the number or location of repeated error instances. This baseline result is not full validity: report remaining inherited errors and skipped checks. Resolve in-scope generation defects rather than repeatedly accepting them as a baseline. A required change outside the authorized scope should be reported, not silently repaired. Verify LibreOffice conversion independently of the schema result.
 
 If structural validation and successful application rendering disagree, report the exact validator error rather than silently ignoring it or claiming the file is fully valid.
+
+For local revisions, verify the promised scope: a palette edit preserves text, geometry, notes and order; a layout edit preserves intended text and notes; reordering preserves each slide's notes and updates any visible page numbers. Resolve the presentation's relationship-based display order, not numeric `slideN.xml` filenames. Compare only the invariants appropriate to the requested change, then inspect affected renders and the overall deck.
+
+For revisions retaining source part identities, use the scoped comparison helper:
+
+```bash
+python <skill-dir>/scripts/compare_decks.py before.pptx after.pptx --mode palette --slides 4,7,11
+```
+
+`--slides` uses 1-based display order; omit it to allow changes throughout the deck. `layout` allows geometry and styling edits inside existing slide/layout/master XML, while preserving text, content references, playback settings, notes and relationships. Layout switches or dependency rewrites need separate review. Global style changes are conservatively rejected for a partial slide selection. `palette` compares existing color slots; adding an explicit override to inherited color may be conservatively rejected. `reorder` checks a pure order change without `--slides`; deliberate visible-page renumbering needs separate review. These structural checks do not prove visual equivalence or compare independently rebuilt decks by meaning.

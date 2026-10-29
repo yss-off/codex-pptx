@@ -12,6 +12,7 @@
 
 ```bash
 python -m pip install -r requirements-dev.txt
+npm install -g pptxgenjs@4.0.1
 python -m unittest discover -s tests -v
 git diff --check
 ```

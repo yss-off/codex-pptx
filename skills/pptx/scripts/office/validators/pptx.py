@@ -9,6 +9,50 @@ from .base import BaseSchemaValidator
 
 class PPTXSchemaValidator(BaseSchemaValidator):
 
+    def validation_summary(self, success):
+        """Report baseline acceptance separately from a clean checked package.
+
+        XSD counts are distinct diagnostics per part. The validator preprocesses
+        extension namespaces; this report does not certify rendering/editability.
+        """
+        if self.xsd_results is None:
+            return "PPTX validation: FAILED; schema checks were not completed."
+        totals = {
+            key: sum(len(result[key]) for result in self.xsd_results.values())
+            for key in ("current", "inherited", "new", "ignored")
+        }
+        skipped = [name for name, result in self.xsd_results.items() if result["skipped"]]
+        if not success:
+            status = "FAILED"
+        elif totals["inherited"]:
+            status = "NO_NEW_ERRORS; inherited schema defects remain (not a clean package)"
+        elif totals["ignored"] or skipped:
+            status = "CHECKS_PASSED_WITH_LIMITATIONS"
+        else:
+            status = "PASSED_IN_CHECKED_SCOPE"
+        lines = [
+            f"PPTX validation: {status}",
+            "Schema diagnostics (distinct per part): "
+            + ", ".join(f"{key}={value}" for key, value in totals.items())
+            + f", skipped_parts={len(skipped)}",
+            "Scope: packaged XML/relationships; supported XSD after extension preprocessing. "
+            "Rendering, visual quality, and editability are separate checks.",
+        ]
+        if totals["inherited"]:
+            lines.append(
+                "Baseline comparison: no new distinct XSD diagnostic messages per part; "
+                "repeated-error counts and locations are not compared."
+                if success else
+                "Baseline comparison uses distinct XSD diagnostic messages per part; "
+                "repeated-error counts and locations are not compared."
+            )
+        for name, result in self.xsd_results.items():
+            for kind in ("inherited", "ignored"):
+                for error in result[kind]:
+                    lines.append(f"  {kind}: {name}: {error}")
+        lines.extend(f"  skipped (no schema): {name}" for name in skipped)
+        return "\n".join(lines)
+
     PRESENTATIONML_NAMESPACE = (
         "http://schemas.openxmlformats.org/presentationml/2006/main"
     )
@@ -23,6 +67,7 @@ class PPTXSchemaValidator(BaseSchemaValidator):
     }
 
     def validate(self):
+        self.xsd_results = None
         if not self.validate_xml():
             return False
 
